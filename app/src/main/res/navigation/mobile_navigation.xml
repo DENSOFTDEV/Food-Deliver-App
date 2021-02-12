@@ -12,10 +12,16 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
-        android:id="@+id/nav_gallery"
-        android:name="com.densoft.fooddelivery.ui.gallery.GalleryFragment"
-        android:label="@string/menu_gallery"
-        tools:layout="@layout/fragment_gallery" />
+        android:id="@+id/nav_menu"
+        android:name="com.densoft.fooddelivery.ui.menu.MenuFragment"
+        android:label="@string/categories"
+        tools:layout="@layout/fragment_menu" />
+
+    <fragment
+        android:id="@+id/nav_foodList"
+        android:name="com.densoft.fooddelivery.ui.foodlist.FoodListFragment"
+        android:label="@string/food_list"
+        tools:layout="@layout/fragment_menu" />
 
     <fragment
         android:id="@+id/nav_slideshow"
