@@ -24,6 +24,12 @@
         tools:layout="@layout/fragment_menu" />
 
     <fragment
+        android:id="@+id/nav_foodDetail"
+        android:name="com.densoft.fooddelivery.ui.fooddetail.FoodDetailFragment"
+        android:label="@string/food_detail"
+        tools:layout="@layout/fragment_menu" />
+
+    <fragment
         android:id="@+id/nav_slideshow"
         android:name="com.densoft.fooddelivery.ui.slideshow.SlideshowFragment"
         android:label="@string/menu_slideshow"
