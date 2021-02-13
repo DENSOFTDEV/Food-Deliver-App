@@ -1,11 +1,14 @@
 package com.densoft.fooddelivery.common;
 
+import com.densoft.fooddelivery.model.AddOnModel;
 import com.densoft.fooddelivery.model.CategoryModel;
 import com.densoft.fooddelivery.model.FoodModel;
+import com.densoft.fooddelivery.model.SizeModel;
 import com.densoft.fooddelivery.model.UserModel;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.util.List;
 
 public class Common {
     public static final String USER_REFERENCES = "Users";
@@ -25,8 +28,28 @@ public class Common {
             DecimalFormat df = new DecimalFormat("#,##0.00");
             df.setRoundingMode(RoundingMode.UP);
             String finalPrice = new StringBuilder(df.format(price)).toString();
-            return finalPrice.replace(".",",");
+            return finalPrice.replace(".", ",");
         } else
             return "0.00";
+    }
+
+    public static Double calculateExtraPrice(SizeModel userSelectedSize, List<AddOnModel> userSelectedAddOn) {
+        Double result = 0.0;
+        if (userSelectedSize == null && userSelectedAddOn == null) {
+            return 0.0;
+        } else if (userSelectedSize == null) {
+            for (AddOnModel addOnModel : userSelectedAddOn) {
+                result += addOnModel.getPrice();
+            }
+            return result;
+        } else if (userSelectedAddOn == null) {
+            return userSelectedSize.getPrice() * 1.0;
+        } else {
+            result = userSelectedSize.getPrice() * 1.0;
+            for (AddOnModel addOnModel : userSelectedAddOn) {
+                result += addOnModel.getPrice();
+            }
+            return result;
+        }
     }
 }

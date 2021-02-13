@@ -1,6 +1,7 @@
 package com.densoft.fooddelivery.Adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,6 +31,7 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
+import io.reactivex.SingleObserver;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -93,16 +95,79 @@ public class MyFoodListAdapter extends RecyclerView.Adapter<MyFoodListAdapter.My
                 cartItem.setFoodSize("Default");
 
 
-                compositeDisposable.add(cartDataSource.insertOrReplaceAll(cartItem)
-                        .subscribeOn(Schedulers.io())
+                cartDataSource.getItemWithAllOptionsInCart(Common.currentUser.getUid(),
+                        cartItem.getFoodId(),
+                        cartItem.getFoodSize(),
+                        cartItem.getFoodAddon())
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(() -> {
-                            Toast.makeText(context, "Add To Cart Success", Toast.LENGTH_SHORT).show();
-                            //Here we will send a notify to home activity to update counter in cart
-                            EventBus.getDefault().postSticky(new CounterCartEvent(true));
-                        }, throwable -> {
-                            Toast.makeText(context, "[CART ERROR]" + throwable.getMessage(), Toast.LENGTH_SHORT).show();
-                        }));
+                        .subscribe(new SingleObserver<CartItem>() {
+                            @Override
+                            public void onSubscribe(@io.reactivex.annotations.NonNull Disposable d) {
+
+                            }
+
+                            @Override
+                            public void onSuccess(@io.reactivex.annotations.NonNull CartItem cartItemFromDB) {
+                                if (cartItemFromDB.equals(cartItem)) {
+                                    //Already in database, just update
+                                    cartItemFromDB.setFoodExtraPrice(cartItem.getFoodExtraPrice());
+                                    cartItemFromDB.setFoodAddon(cartItem.getFoodAddon());
+                                    cartItemFromDB.setFoodSize(cartItem.getFoodSize());
+                                    cartItemFromDB.setFoodQuantity(cartItemFromDB.getFoodQuantity() + cartItem.getFoodQuantity());
+
+                                    cartDataSource.updateCartItems(cartItemFromDB)
+                                            .subscribeOn(Schedulers.io())
+                                            .observeOn(AndroidSchedulers.mainThread())
+                                            .subscribe(new SingleObserver<Integer>() {
+                                                @Override
+                                                public void onSubscribe(@io.reactivex.annotations.NonNull Disposable d) {
+
+                                                }
+
+                                                @Override
+                                                public void onSuccess(@io.reactivex.annotations.NonNull Integer integer) {
+                                                    Toast.makeText(context, "[Update Cart success]", Toast.LENGTH_SHORT).show();
+                                                    EventBus.getDefault().postSticky(new CounterCartEvent(true));
+                                                }
+
+                                                @Override
+                                                public void onError(@io.reactivex.annotations.NonNull Throwable e) {
+                                                    Toast.makeText(context, "[UPDATE CART]" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                } else {
+                                    //item not available in cart before, insert new
+                                    compositeDisposable.add(cartDataSource.insertOrReplaceAll(cartItem)
+                                            .subscribeOn(Schedulers.io())
+                                            .observeOn(AndroidSchedulers.mainThread())
+                                            .subscribe(() -> {
+                                                Toast.makeText(context, "Add to cart success", Toast.LENGTH_SHORT).show();
+                                                EventBus.getDefault().postSticky(new CounterCartEvent(true));
+                                            }, throwable -> {
+                                                Toast.makeText(context, "[CART ERROR]" + throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                                            }));
+                                }
+                            }
+
+                            @Override
+                            public void onError(@io.reactivex.annotations.NonNull Throwable e) {
+                                if (e.getMessage().contains("empty")) {
+                                    //Default, if cart is empty this code will be fired
+                                    compositeDisposable.add(cartDataSource.insertOrReplaceAll(cartItem)
+                                            .subscribeOn(Schedulers.io())
+                                            .observeOn(AndroidSchedulers.mainThread())
+                                            .subscribe(() -> {
+                                                Toast.makeText(context, "Add to cart success", Toast.LENGTH_SHORT).show();
+                                                EventBus.getDefault().postSticky(new CounterCartEvent(true));
+                                            }, throwable -> {
+                                                Toast.makeText(context, "[CART ERROR]" + throwable.getMessage(), Toast.LENGTH_SHORT).show();
+                                            }));
+                                } else
+                                    Toast.makeText(context, "[GET CART]" + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+
             }
         });
 
